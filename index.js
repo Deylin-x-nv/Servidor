@@ -1,7 +1,6 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const fs = require('fs');
-const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
 const tmp = require('tmp');
 
@@ -19,11 +18,11 @@ app.get('/proxy-mp3', async (req, res) => {
     return res.status(400).json({ error: 'Se requieren audioUrl e imageUrl.' });
   }
 
-  try {
-    const audioTmp = tmp.fileSync({ postfix: '.mp3' });
-    const imageTmp = tmp.fileSync({ postfix: '.jpg' });
-    const outputTmp = tmp.fileSync({ postfix: '.mp3' });
+  const audioTmp = tmp.fileSync({ postfix: '.mp3' });
+  const imageTmp = tmp.fileSync({ postfix: '.jpg' });
+  const outputTmp = tmp.fileSync({ postfix: '.mp3' });
 
+  try {
     // Descargar audio
     const audioRes = await fetch(audioUrl);
     if (!audioRes.ok) throw new Error('Error al descargar el audio.');
@@ -49,11 +48,12 @@ app.get('/proxy-mp3', async (req, res) => {
       .input(audioTmp.name)
       .input(imageTmp.name)
       .outputOptions([
-        '-map 0',
-        '-map 1',
-        '-c copy',
+        '-map 0:a',
+        '-map 1:v',
+        '-c:a libmp3lame', // Requiere recodificar para añadir portada
+        '-c:v mjpeg',      // Portada como jpeg
         '-id3v2_version 3',
-        '-metadata:s:v title="Cover"',
+        '-metadata:s:v title="Album cover"',
         '-metadata:s:v comment="Cover (front)"'
       ])
       .on('end', () => {
@@ -64,12 +64,12 @@ app.get('/proxy-mp3', async (req, res) => {
       })
       .on('error', (err) => {
         console.error('Error en ffmpeg:', err);
-        res.status(500).json({ error: 'Error procesando el audio.' });
+        res.status(500).json({ error: 'Error procesando el audio con ffmpeg.' });
       })
       .save(outputTmp.name);
 
   } catch (err) {
-    console.error(err);
+    console.error('Error general:', err);
     res.status(500).json({ error: 'Error en el servidor.' });
   }
 });
