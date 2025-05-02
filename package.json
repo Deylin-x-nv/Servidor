@@ -1,14 +1,11 @@
 {
-  "name": "mp3-cover-proxy",
+  "name": "whatsapp-clone-backend",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "fluent-ffmpeg": "^2.1.2",
-    "node-fetch": "^2.6.7",
-    "tmp": "^0.2.1"
+    "express": "^4.18.4"
   }
 }
