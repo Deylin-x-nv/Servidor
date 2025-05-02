@@ -1,37 +1,40 @@
 const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
+const app = express();
+const PORT = 10000;
+
+app.use(cors());
 app.use(express.json());
 
-let mensajes = [];
+const FILE = path.join(__dirname, 'mensajes.json');
 
-// Ruta de prueba
+// Inicializa archivo si no existe
+if (!fs.existsSync(FILE)) {
+  fs.writeFileSync(FILE, '[]');
+}
+
 app.get('/', (req, res) => {
-  res.send('Servidor de mensajes estilo WhatsApp funcionando.');
+  res.send('Servidor de mensajes en funcionamiento');
 });
 
-// Obtener todos los mensajes
 app.get('/mensajes', (req, res) => {
+  const mensajes = JSON.parse(fs.readFileSync(FILE));
   res.json(mensajes);
 });
 
-// Enviar nuevo mensaje
 app.post('/mensajes', (req, res) => {
   const { usuario, texto } = req.body;
   if (!usuario || !texto) {
-    return res.status(400).json({ error: 'usuario y texto son obligatorios.' });
+    return res.status(400).json({ error: 'usuario y texto son requeridos' });
   }
 
-  const nuevoMensaje = {
-    id: mensajes.length + 1,
-    usuario,
-    texto,
-    fecha: new Date().toISOString()
-  };
-
-  mensajes.push(nuevoMensaje);
-  res.status(201).json(nuevoMensaje);
+  const mensajes = JSON.parse(fs.readFileSync(FILE));
+  mensajes.push({ usuario, texto, fecha: new Date().toISOString() });
+  fs.writeFileSync(FILE, JSON.stringify(mensajes, null, 2));
+  res.json({ success: true });
 });
 
 app.listen(PORT, () => {
